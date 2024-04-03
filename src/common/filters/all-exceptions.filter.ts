@@ -9,6 +9,8 @@ import { Request, Response } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  constructor() {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
 
@@ -25,6 +27,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.message
         : 'Unhandled error occurred';
 
+    console.log(exception);
     response.status(httpStatus).json({
       statusCode: httpStatus,
       timestamp: new Date().toISOString(),

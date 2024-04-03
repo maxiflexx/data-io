@@ -1,42 +1,67 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER, WinstonLogger } from 'nest-winston';
+import { Injectable, Logger } from '@nestjs/common';
+import { ApiResponse } from '@opensearch-project/opensearch/.';
+import { OpensearchQueryBuilder } from 'src/libs/query-builder';
+import { generateDateRange } from '../../libs/date';
 import { OpensearchService } from '../opensearch/opensearch.service';
+import { Coin } from './coin.interface';
+import { GetCoinsByQueryDto } from './dtos/get.dto';
 
 @Injectable()
 export class CoinService {
+  private readonly logger = new Logger();
   constructor(
-    private readonly opensearchService: OpensearchService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
+    private readonly opensearchService: OpensearchService, // @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
   ) {}
 
-  async getHello() {
-    this.logger.log({ level: 'info', message: 'HELLOTEST' });
-    const test = await this.opensearchService.client.cat.indices();
-    return test;
+  async search(options: GetCoinsByQueryDto) {
+    const indexNames = generateDateRange(
+      options.startDate,
+      options.endDate,
+    ).map((date) => `coins-${date}`);
+
+    await this.opensearchService.checkIndexAndCreate(indexNames);
+
+    const query = new OpensearchQueryBuilder()
+      .setTerms('market', options.market)
+      .setRange('candleDateTimeUtc', options.startDate, options.endDate)
+      .setSort(options.sortingField, options.sortingDirection)
+      .setOffset(options.offset)
+      .setLimit(options.limit)
+      .build();
+
+    const res = await this.opensearchService.searchByQuery(indexNames, query);
+    return this.getDataFromResult(res);
   }
 
-  async push() {
-    const indexName = 'test-index';
-    const properties = {
-      time: { type: 'date' },
-      market: { type: 'keyword' },
-    };
+  async push(coins: Coin[]) {
+    const indexNames = [
+      ...new Set(
+        coins.map((coin) => this.generateIndex(coin.candleDateTimeUtc)),
+      ),
+    ];
+    await this.opensearchService.checkIndexAndCreate(indexNames);
 
-    await this.opensearchService.checkIndexAndCreate([indexName], properties);
-
-    const data = [
+    const data = coins.flatMap((doc) => [
       {
         index: {
-          _index: indexName,
+          _index: this.generateIndex(doc.candleDateTimeUtc),
+          _id: `${doc.market}_${doc.candleDateTimeUtc.toISOString()}`,
         },
       },
       {
-        time: new Date().toISOString(),
-        market: 'btc',
-        price: 10600000,
+        ...doc,
       },
-    ];
+    ]);
 
-    return await this.opensearchService.sendToBulk(data, indexName);
+    return await this.opensearchService.sendToBulk(data);
+  }
+
+  private getDataFromResult(res: ApiResponse<Record<string, any>, unknown>) {
+    return res.body.hits.hits.map((d) => d._source);
+  }
+
+  private generateIndex(currentDate: Date) {
+    const yearMonth = currentDate.toISOString().slice(0, 7).replace('-', '');
+    return `coins-${yearMonth}`;
   }
 }

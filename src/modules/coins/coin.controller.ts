@@ -1,17 +1,28 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  ParseArrayPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CoinService } from './coin.service';
+import { GetCoinsByQueryDto } from './dtos/get.dto';
+import { UpsertCoinDto } from './dtos/upsert.dto';
 
 @Controller('/coins')
 export class CoinController {
   constructor(private readonly coinService: CoinService) {}
 
   @Get()
-  async getHello() {
-    return await this.coinService.getHello();
+  async search(@Query() query: GetCoinsByQueryDto) {
+    return await this.coinService.search(query);
   }
 
   @Post()
-  async pushTest() {
-    return await this.coinService.push();
+  async push(
+    @Body(new ParseArrayPipe({ items: UpsertCoinDto })) data: UpsertCoinDto[],
+  ) {
+    return await this.coinService.push(data);
   }
 }

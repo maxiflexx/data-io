@@ -1,25 +1,15 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { WinstonModule } from 'nest-winston';
-import * as winston from 'winston';
 import { ApiDocsModule } from './api-docs/api-docs.module';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { getWinstonLogger } from './logger';
 
 async function bootstrap() {
+  const logger = getWinstonLogger();
+
   const app = await NestFactory.create(AppModule, {
-    logger: WinstonModule.createLogger({
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.ms(),
-            winston.format.prettyPrint(),
-          ),
-          level: 'silly',
-        }),
-      ],
-    }),
+    logger,
   });
 
   app.useGlobalFilters(new AllExceptionsFilter());
@@ -34,7 +24,14 @@ async function bootstrap() {
     });
   }
 
-  await app.listen(configService.get('port'));
+  await app.listen(configService.get('port'), () => {
+    logger.log({
+      context: 'NestApplication',
+      message: `${configService.get(
+        'nodeEnv',
+      )} server listening to port ${configService.get('port')}`,
+    });
+  });
 }
 
 bootstrap();
