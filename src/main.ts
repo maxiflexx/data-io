@@ -1,5 +1,7 @@
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { ValidationError } from 'class-validator';
 import { ApiDocsModule } from './api-docs/api-docs.module';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -13,6 +15,18 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        const message = validationErrors
+          .map((error) => Object.values(error.constraints).join(', '))
+          .join(', ');
+        return new BadRequestException(message);
+      },
+    }),
+  );
 
   const configService = app.get(ConfigService);
 

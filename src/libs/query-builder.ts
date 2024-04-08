@@ -1,3 +1,12 @@
+interface QueryBuilder {
+  setTerms(field: string, value: any): QueryBuilder;
+  setRange(field: string, from: any, to: any): QueryBuilder;
+  setSort(field: string, order: 'ASC' | 'DESC' | 'asc' | 'desc'): QueryBuilder;
+  setLimit(limit: number): QueryBuilder;
+  setOffset(offset: number): QueryBuilder;
+  build(): SearchQuery;
+}
+
 export interface SearchQuery {
   query: {
     bool: {
@@ -21,15 +30,6 @@ export interface SearchQuery {
   };
   from: number;
   size: number;
-}
-
-interface QueryBuilder {
-  setTerms(field: string, value: any): QueryBuilder;
-  setRange(field: string, from: any, to: any): QueryBuilder;
-  setSort(field: string, order: 'ASC' | 'DESC' | 'asc' | 'desc'): QueryBuilder;
-  setLimit(limit: number): QueryBuilder;
-  setOffset(offset: number): QueryBuilder;
-  build(): SearchQuery;
 }
 
 export class OpensearchQueryBuilder implements QueryBuilder {
@@ -86,11 +86,3 @@ export class OpensearchQueryBuilder implements QueryBuilder {
     };
   }
 }
-
-const query = new OpensearchQueryBuilder()
-  .setTerms('market', 'KRW-BTC')
-  .setRange('candleDateTimeUtc', '2023-03-01', '2023-04-01')
-  .setSort('candleDateTimeUtc', 'DESC')
-  .setOffset(0)
-  .setLimit(10)
-  .build();

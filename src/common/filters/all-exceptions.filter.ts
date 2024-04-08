@@ -4,12 +4,18 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor() {}
+  private logger: Logger;
+
+  constructor() {
+    this.logger = new Logger(this.constructor.name);
+  }
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -22,17 +28,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    const { message, name, stack } =
       exception instanceof HttpException
-        ? exception.message
-        : 'Unhandled error occurred';
+        ? exception
+        : new InternalServerErrorException('Unhandled error occurred');
 
-    console.log(exception);
+    this.logger.error({
+      message,
+      error: {
+        status: httpStatus,
+        name,
+        message,
+      },
+      stack,
+    });
+
     response.status(httpStatus).json({
       statusCode: httpStatus,
-      timestamp: new Date().toISOString(),
+      name,
       message,
+      stack,
       path: request.url,
+      timestamp: new Date().toISOString(),
     });
   }
 }

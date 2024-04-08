@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { Client } from '@opensearch-project/opensearch';
 import { SearchQuery } from 'src/libs/query-builder';
 import { coinsTemplate } from 'src/templates/coins';
@@ -7,7 +13,7 @@ import { OpensearchConnectOptions } from './opensearch.interface';
 
 @Injectable()
 export class OpensearchService implements OnModuleInit {
-  client: Client;
+  public client: Client;
   private logger: Logger;
 
   constructor(
@@ -55,47 +61,39 @@ export class OpensearchService implements OnModuleInit {
   }
 
   async searchByQuery(indexNames: string[], query: SearchQuery) {
-    return await this.client.search({
-      index: indexNames,
-      body: {
-        ...query,
-      },
-      track_total_hits: true, // 전체 문서 갯수
-      ignore_unavailable: true, // 해당 인덱스 없을 시 무시
-    });
+    try {
+      return await this.client.search({
+        index: indexNames,
+        body: {
+          ...query,
+        },
+        track_total_hits: true, // 전체 문서 갯수
+        ignore_unavailable: true, // 해당 인덱스 없을 시 무시
+      });
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
   }
 
-  async sendToBulk(data: Record<string, any>[], indexName?: string) {
+  async sendToBulk(data: Record<string, any>[]) {
     const { body: bulkResponse } = await this.client.bulk({
       refresh: true,
-      // index: indexName,
       body: data,
     });
 
     if (bulkResponse.errors) {
-      const erroredDocuments = [];
+      let message = '';
       bulkResponse.items.forEach((action, i) => {
         const operation = Object.keys(action)[0];
+
         if (action[operation].error) {
-          erroredDocuments.push({
-            status: action[operation].status,
-            error: action[operation].error,
-            operation: data[i * 2],
-            document: data[i * 2 + 1],
-          });
+          message += action[operation].error.reason;
         }
       });
-      this.logger.error({
-        message: 'Bulk request failed.',
-        error: erroredDocuments,
-      });
+
+      throw new BadRequestException(message);
     }
 
-    this.client.indices.putIndexTemplate;
     return bulkResponse;
-  }
-
-  async test() {
-    this.client.search();
   }
 }

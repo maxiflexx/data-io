@@ -16,13 +16,18 @@ export class CoinController {
 
   @Get()
   async search(@Query() query: GetCoinsByQueryDto) {
-    return await this.coinService.search(query);
+    return await this.coinService.getCoinsByQuery(query);
   }
 
   @Post()
   async push(
     @Body(new ParseArrayPipe({ items: UpsertCoinDto })) data: UpsertCoinDto[],
   ) {
-    return await this.coinService.push(data);
+    return await this.coinService.upsertCoins(data);
+  }
+
+  @Get('/err')
+  async testErr() {
+    throw new Error('Test Errror');
   }
 }
