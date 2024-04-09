@@ -1,7 +1,7 @@
 export const coinsTemplate = {
   name: 'coins-template',
   body: {
-    index_patterns: ['coins-*'],
+    index_patterns: ['coins-*', 'test-coins-*', 'dev-coins-*'],
     template: {
       settings: {
         index: {
