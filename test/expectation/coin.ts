@@ -15,7 +15,6 @@ export function expectGetCoinsResponseSucceed(result) {
   expect(result).toHaveProperty('timestamp');
   expect(result).toHaveProperty('candleAccTradePrice');
   expect(result).toHaveProperty('candleAccTradeVolume');
-  expect(result).toHaveProperty('prevClosingPrice');
-  expect(result).toHaveProperty('changePrice');
-  expect(result).toHaveProperty('changeRate');
+  expect(result).toHaveProperty('tradePrice');
+  expect(result).toHaveProperty('unit');
 }

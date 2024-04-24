@@ -39,13 +39,9 @@ export class UpsertCoinDto {
 
   @Type(() => Number)
   @IsNumber()
-  prevClosingPrice: number;
+  tradePrice: number;
 
   @Type(() => Number)
   @IsNumber()
-  changePrice: number;
-
-  @Type(() => Number)
-  @IsNumber()
-  changeRate: number;
+  unit: number;
 }

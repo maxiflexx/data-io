@@ -8,7 +8,6 @@ export interface Coin {
   timestamp: number;
   candleAccTradePrice: number;
   candleAccTradeVolume: number;
-  prevClosingPrice: number;
-  changePrice: number;
-  changeRate: number;
+  tradePrice: number;
+  unit: number;
 }

@@ -15,8 +15,7 @@ export function mockCoinRaw(
     timestamp: faker.datatype.number(),
     candleAccTradePrice: faker.datatype.number(),
     candleAccTradeVolume: faker.datatype.number(),
-    prevClosingPrice: faker.datatype.number(),
-    changePrice: faker.datatype.number(),
-    changeRate: faker.datatype.number(),
+    tradePrice: faker.datatype.number(),
+    unit: faker.datatype.number(),
   };
 }
