@@ -25,9 +25,4 @@ export class CoinController {
   ) {
     return await this.coinService.upsertCoins(data);
   }
-
-  @Get('/err')
-  async testErr() {
-    throw new Error('Test Errror');
-  }
 }
