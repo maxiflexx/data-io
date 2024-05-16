@@ -1,3 +1,5 @@
+import { isEmptyArray, isEmptyObject } from './utils';
+
 interface QueryBuilder {
   setTerms(field: string, value: any): QueryBuilder;
   setRange(field: string, from: any, to: any): QueryBuilder;
@@ -9,8 +11,8 @@ interface QueryBuilder {
 
 export interface SearchQuery {
   query: {
-    bool: {
-      filter: {
+    bool?: {
+      filter?: {
         term?: {
           [field: string]: any;
         };
@@ -36,8 +38,8 @@ export class OpensearchQueryBuilder implements QueryBuilder {
   private terms = [];
   private range = {};
   private sort = {};
-  private from = 10;
-  private size = 0;
+  private from = 0;
+  private size = 10;
 
   setTerms(field: string, value: any): QueryBuilder {
     this.terms.push({ [field]: value });
@@ -71,16 +73,22 @@ export class OpensearchQueryBuilder implements QueryBuilder {
       filter.push({ term });
     });
 
-    filter.push({ range: this.range });
+    if (!isEmptyObject(this.range)) {
+      filter.push({ range: this.range });
+    }
 
-    const query = { bool: { filter } };
+    const query = {
+      ...(!isEmptyArray(filter) && {
+        bool: { filter },
+      }),
+    };
     const sort = this.sort;
     const from = this.from;
     const size = this.size;
 
     return {
-      query,
-      sort,
+      ...(!isEmptyObject(query) && { query }),
+      ...(!isEmptyObject(sort) && { sort }),
       from,
       size,
     };

@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiResponse } from '@opensearch-project/opensearch/.';
 import { paginateResponse } from 'src/libs/paginate';
 import { OpensearchQueryBuilder } from 'src/libs/query-builder';
 import { generateDateRange } from '../../libs/date';
@@ -48,7 +47,7 @@ export class CoinService {
     const res = await this.opensearchService.searchByQuery(indexNames, query);
 
     const total = res.body.hits.total.value;
-    const data = this.getDataFromSearchResult(res);
+    const data = this.opensearchService.getDataFromSearchResult(res);
 
     return paginateResponse({
       total,
@@ -79,21 +78,7 @@ export class CoinService {
     ]);
 
     const res = await this.opensearchService.sendToBulk(data);
-    return this.getDataFromBulkResult(res);
-  }
-
-  private getDataFromSearchResult(
-    res: ApiResponse<Record<string, any>, unknown>,
-  ) {
-    return res.body.hits.hits.map((d) => d._source);
-  }
-
-  private getDataFromBulkResult(res: Record<string, any>) {
-    return res.items.map((d) => ({
-      index: d['index']._index,
-      id: d['index']._id,
-      action: d['index'].result,
-    }));
+    return this.opensearchService.getDataFromBulkResult(res);
   }
 
   private generateIndex(currentDate: Date) {

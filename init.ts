@@ -63,24 +63,62 @@ const DATA_IO_URL = 'http://localhost:3001';
 
 (async () => {
   const upbitInstance = getInstance(UPBIT_URL);
+  const dataIoInstance = getInstance(DATA_IO_URL);
 
-  const marketName = 'KRW-BTC';
+  // 20240514 업비트 시총 기준 탑 10
+  const topMarkets = [
+    'KRW-BTC',
+    'KRW-ETH',
+    'KRW-XRP',
+    'KRW-ADA',
+    'KRW-TRX',
+    'KRW-DOT',
+    'KRW-DOGE',
+    'KRW-SOL',
+    'KRW-AVAX',
+    'KRW-SHIB',
+  ];
+
+  // market 데이터 넣기
+  const { data }: { data: any[] } = await upbitInstance.get('/v1/market/all', {
+    params: {
+      isDetails: false,
+    },
+  });
+
+  const filteredAndConverted = data
+    .filter((d) => d.market.includes('KRW'))
+    .map((d) => {
+      const { market, korean_name, english_name } = d;
+      const isEnabled = topMarkets.includes(market);
+
+      return {
+        code: market,
+        koreanName: korean_name,
+        englishName: english_name,
+        isEnabled,
+      };
+    });
+
+  await dataIoInstance.post('/markets', filteredAndConverted);
+
+  // Coin 데이터 넣기
   const endDates = generateEndDates();
   const count = 200;
 
-  const dataIoInstance = getInstance(DATA_IO_URL);
+  for (const market of topMarkets) {
+    for (const endDate of endDates) {
+      const { data } = await upbitInstance.get('/v1/candles/minutes/1', {
+        params: {
+          market,
+          to: endDate,
+          count,
+        },
+      });
 
-  for (let endDate of endDates) {
-    const { data } = await upbitInstance.get('/v1/candles/minutes/1', {
-      params: {
-        market: marketName,
-        to: endDate,
-        count,
-      },
-    });
-
-    const converted = convertData(data);
-    await dataIoInstance.post('/coins', converted);
-    await sleep(500);
+      const converted = convertData(data);
+      await dataIoInstance.post('/coins', converted);
+      await sleep(500);
+    }
   }
 })();

@@ -9,12 +9,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationError } from 'class-validator';
 import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
 import config from 'src/config';
-import { CoinModule } from 'src/modules/coins/coin.module';
+import { MarketModule } from 'src/modules/markets/market.module';
 import { OpensearchModule } from 'src/modules/opensearch/opensearch.module';
 import * as request from 'supertest';
-import { expectUpsertCoinsResponseSucceed } from 'test/expectation/coin';
-import { mockCoinRaw } from 'test/mockup/coin';
-import { generateObjects } from 'test/utils';
+import { expectGetMarketsResponseSucceed } from 'test/expectation/market';
 
 @Module({
   imports: [
@@ -28,12 +26,12 @@ import { generateObjects } from 'test/utils';
       }),
       inject: [ConfigService],
     }),
-    CoinModule,
+    MarketModule,
   ],
 })
 class TestModule {}
 
-describe('Coin API Test', () => {
+describe('Market API Test', () => {
   let app: INestApplication;
   let req: request.SuperTest<request.Test>;
 
@@ -69,20 +67,18 @@ describe('Coin API Test', () => {
     await app.close();
   });
 
-  describe('POST /coins', () => {
-    const rootApiPath = '/coins';
-    const coinName = 'KRW-BTC';
+  describe('Get /markets', () => {
+    const rootApiPath = '/markets';
 
-    it('success - Upsert coins. (200)', async () => {
+    it('success - Successfully returned data. (200)', async () => {
       // given
-      const coinRaws = generateObjects(5, mockCoinRaw, coinName);
 
       // when
-      const { body } = await req.post(`${rootApiPath}`).send(coinRaws);
+      const { body } = await req.get(`${rootApiPath}`);
 
       // then
-      for (const upsertRes of body) {
-        expectUpsertCoinsResponseSucceed(upsertRes);
+      for (const market of body) {
+        expectGetMarketsResponseSucceed(market);
       }
     });
   });

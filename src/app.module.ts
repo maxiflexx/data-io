@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpLoggingMiddleware } from './common/middlewares/http-logging.middleware';
 import config from './config';
 import { CoinModule } from './modules/coins/coin.module';
+import { MarketModule } from './modules/markets/market.module';
 import { OpensearchModule } from './modules/opensearch/opensearch.module';
 
 @Global()
@@ -26,6 +27,7 @@ import { OpensearchModule } from './modules/opensearch/opensearch.module';
       inject: [ConfigService],
     }),
     CoinModule,
+    MarketModule,
   ],
   controllers: [],
   providers: [Logger],

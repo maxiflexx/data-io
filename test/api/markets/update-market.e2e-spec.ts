@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpStatus,
   INestApplication,
   Module,
   ValidationPipe,
@@ -9,12 +10,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationError } from 'class-validator';
 import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
 import config from 'src/config';
-import { CoinModule } from 'src/modules/coins/coin.module';
+import { MarketModule } from 'src/modules/markets/market.module';
 import { OpensearchModule } from 'src/modules/opensearch/opensearch.module';
 import * as request from 'supertest';
-import { expectUpsertCoinsResponseSucceed } from 'test/expectation/coin';
-import { mockCoinRaw } from 'test/mockup/coin';
-import { generateObjects } from 'test/utils';
+import { expectUpdateMarketResponseSucceed } from 'test/expectation/market';
+import { mockMarketRaw } from 'test/mockup/market';
+import { expectResponseFailed } from 'test/utils';
 
 @Module({
   imports: [
@@ -28,12 +29,12 @@ import { generateObjects } from 'test/utils';
       }),
       inject: [ConfigService],
     }),
-    CoinModule,
+    MarketModule,
   ],
 })
 class TestModule {}
 
-describe('Coin API Test', () => {
+describe('Market API Test', () => {
   let app: INestApplication;
   let req: request.SuperTest<request.Test>;
 
@@ -69,21 +70,35 @@ describe('Coin API Test', () => {
     await app.close();
   });
 
-  describe('POST /coins', () => {
-    const rootApiPath = '/coins';
-    const coinName = 'KRW-BTC';
+  describe('PUT /markets', () => {
+    const rootApiPath = '/markets';
 
-    it('success - Upsert coins. (200)', async () => {
+    it('success - Update market. (200)', async () => {
       // given
-      const coinRaws = generateObjects(5, mockCoinRaw, coinName);
+      const marketRaw = mockMarketRaw();
+      await req.post(`${rootApiPath}`).send([marketRaw]);
 
       // when
-      const { body } = await req.post(`${rootApiPath}`).send(coinRaws);
+      const { body } = await req
+        .put(`${rootApiPath}/${marketRaw.code}`)
+        .send({ isEnabled: true });
 
       // then
-      for (const upsertRes of body) {
-        expectUpsertCoinsResponseSucceed(upsertRes);
-      }
+      expectUpdateMarketResponseSucceed(body);
+    });
+
+    it('failed - Not found doc. (404)', async () => {
+      // given
+      const marketRaw = mockMarketRaw();
+      await req.post(`${rootApiPath}`).send([marketRaw]);
+
+      // when
+      const { body } = await req
+        .put(`${rootApiPath}/notFound`)
+        .send({ isEnabled: true });
+
+      // then
+      expectResponseFailed(body, HttpStatus.NOT_FOUND);
     });
   });
 });
