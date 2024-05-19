@@ -7,6 +7,8 @@ import {
   RequestMethod,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import * as path from 'path';
 import { HttpLoggingMiddleware } from './common/middlewares/http-logging.middleware';
 import config from './config';
 import { CoinModule } from './modules/coins/coin.module';
@@ -28,6 +30,10 @@ import { OpensearchModule } from './modules/opensearch/opensearch.module';
     }),
     CoinModule,
     MarketModule,
+    ServeStaticModule.forRoot({
+      rootPath: path.join(`${__dirname}`, '../', '../public'),
+      serveRoot: '/public/',
+    }),
   ],
   controllers: [],
   providers: [Logger],

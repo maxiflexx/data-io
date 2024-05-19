@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { isBefore, subDays, subMinutes } from 'date-fns';
+import * as fs from 'fs';
 
 const sleep = async (milliseconds: number) => {
   return new Promise((r) => setTimeout(r, milliseconds));
@@ -59,11 +60,13 @@ const convertData = (data: any[]) => {
 };
 
 const UPBIT_URL = 'https://api.upbit.com';
+const STATIC_URL = 'https://static.upbit.com';
 const DATA_IO_URL = 'http://localhost:3001';
 
 (async () => {
   const upbitInstance = getInstance(UPBIT_URL);
   const dataIoInstance = getInstance(DATA_IO_URL);
+  const staticInstance = getInstance(STATIC_URL);
 
   // 20240514 업비트 시총 기준 탑 10
   const topMarkets = [
@@ -79,7 +82,7 @@ const DATA_IO_URL = 'http://localhost:3001';
     'KRW-SHIB',
   ];
 
-  // market 데이터 넣기
+  // // market 데이터 넣기
   const { data }: { data: any[] } = await upbitInstance.get('/v1/market/all', {
     params: {
       isDetails: false,
@@ -100,25 +103,35 @@ const DATA_IO_URL = 'http://localhost:3001';
       };
     });
 
-  await dataIoInstance.post('/markets', filteredAndConverted);
+  // await dataIoInstance.post('/markets', filteredAndConverted);
 
-  // Coin 데이터 넣기
-  const endDates = generateEndDates();
-  const count = 200;
+  // logo 다운로드
+  for (const market of filteredAndConverted) {
+    const code = market.code.split('-')[1];
 
-  for (const market of topMarkets) {
-    for (const endDate of endDates) {
-      const { data } = await upbitInstance.get('/v1/candles/minutes/1', {
-        params: {
-          market,
-          to: endDate,
-          count,
-        },
-      });
-
-      const converted = convertData(data);
-      await dataIoInstance.post('/coins', converted);
-      await sleep(500);
-    }
+    const imageResponse = await staticInstance.get(`/logos/${code}.png`, {
+      responseType: 'stream',
+    });
+    imageResponse.data.pipe(fs.createWriteStream(`./public/${code}.png`));
   }
+
+  // // Coin 데이터 넣기
+  // const endDates = generateEndDates();
+  // const count = 200;
+
+  // for (const market of topMarkets) {
+  //   for (const endDate of endDates) {
+  //     const { data } = await upbitInstance.get('/v1/candles/minutes/1', {
+  //       params: {
+  //         market,
+  //         to: endDate,
+  //         count,
+  //       },
+  //     });
+
+  //     const converted = convertData(data);
+  //     await dataIoInstance.post('/coins', converted);
+  //     await sleep(500);
+  //   }
+  // }
 })();
