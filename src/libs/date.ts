@@ -9,6 +9,7 @@ export const generateDateRange = (startDate: Date, endDate: Date): string[] => {
     dateRange.push(yearMonth);
 
     currentDate.setMonth(currentDate.getMonth() + 1);
+    currentDate.setDate(1);
   }
 
   return dateRange;

@@ -43,7 +43,7 @@ export class OpensearchService implements OnModuleInit {
       await this.client.indices.putIndexTemplate(marketsTemplate);
     } catch (error) {
       this.logger.error({
-        message: 'Unable to connect to opensearch.',
+        message: `Unable to connect to opensearch. ${this.opensearchConnectOptions.node}`,
         error: null,
       });
       process.exit(1);

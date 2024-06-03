@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
 import { isBefore, subDays, subMinutes } from 'date-fns';
-import * as fs from 'fs';
 
 const sleep = async (milliseconds: number) => {
   return new Promise((r) => setTimeout(r, milliseconds));
@@ -106,32 +105,32 @@ const DATA_IO_URL = 'http://localhost:3001';
   // await dataIoInstance.post('/markets', filteredAndConverted);
 
   // logo 다운로드
-  for (const market of filteredAndConverted) {
-    const code = market.code.split('-')[1];
+  // for (const market of filteredAndConverted) {
+  //   const code = market.code.split('-')[1];
 
-    const imageResponse = await staticInstance.get(`/logos/${code}.png`, {
-      responseType: 'stream',
-    });
-    imageResponse.data.pipe(fs.createWriteStream(`./public/${code}.png`));
-  }
+  //   const imageResponse = await staticInstance.get(`/logos/${code}.png`, {
+  //     responseType: 'stream',
+  //   });
+  //   imageResponse.data.pipe(fs.createWriteStream(`./public/${code}.png`));
+  // }
 
   // // Coin 데이터 넣기
-  // const endDates = generateEndDates();
-  // const count = 200;
+  const endDates = generateEndDates();
+  const count = 200;
 
-  // for (const market of topMarkets) {
-  //   for (const endDate of endDates) {
-  //     const { data } = await upbitInstance.get('/v1/candles/minutes/1', {
-  //       params: {
-  //         market,
-  //         to: endDate,
-  //         count,
-  //       },
-  //     });
+  for (const market of topMarkets) {
+    for (const endDate of endDates) {
+      const { data } = await upbitInstance.get('/v1/candles/minutes/1', {
+        params: {
+          market,
+          to: endDate,
+          count,
+        },
+      });
 
-  //     const converted = convertData(data);
-  //     await dataIoInstance.post('/coins', converted);
-  //     await sleep(500);
-  //   }
-  // }
+      const converted = convertData(data);
+      await dataIoInstance.post('/coins', converted);
+      await sleep(500);
+    }
+  }
 })();
