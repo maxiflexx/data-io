@@ -1,9 +1,27 @@
 ---
 version: '3'
 services:
-  server:
-    container_name: data-io
-    build: .
+  server-dev:
+    container_name: data-io-dev
+    build:
+      context: .
+      target: dev
+      dockerfile: Dockerfile
+    image: data-io:dev
+    expose:
+      - 3001
+    ports:
+      - 3001:3001
+    restart: 'unless-stopped'
+    depends_on:
+      - opensearch-node1
+  server-prod:
+    container_name: data-io-prod
+    build:
+      context: .
+      target: prod
+      dockerfile: Dockerfile
+    image: data-io:prod
     expose:
       - 3001
     ports:
