@@ -55,6 +55,8 @@ services:
       - 9600:9600 # required for Performance Analyzer
     networks:
       - opensearch-net
+    restart: 'unless-stopped'
+
   opensearch-node2:
     image: opensearchproject/opensearch:latest
     container_name: opensearch-node2
@@ -77,6 +79,8 @@ services:
       - opensearch-data2:/usr/share/opensearch/data
     networks:
       - opensearch-net
+    restart: 'unless-stopped'
+
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:latest
     container_name: opensearch-dashboards
@@ -88,6 +92,7 @@ services:
       OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
     networks:
       - opensearch-net
+    restart: 'unless-stopped'
 
 volumes:
   opensearch-data1:
