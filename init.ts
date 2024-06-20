@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { isBefore, subDays, subMinutes } from 'date-fns';
+import * as fs from 'fs';
 
 const sleep = async (milliseconds: number) => {
   return new Promise((r) => setTimeout(r, milliseconds));
@@ -58,11 +59,21 @@ const convertData = (data: any[]) => {
   });
 };
 
-const UPBIT_URL = 'https://api.upbit.com';
-const STATIC_URL = 'https://static.upbit.com';
-const DATA_IO_URL = 'http://localhost:3001';
-
 (async () => {
+  // public 폴더가 있으면, 최초 1회 초기화 스크립트 실행한 것으로 간주
+  const files = fs.readFileSync('./');
+  if (files.includes('public')) {
+    return;
+  }
+
+  fs.mkdirSync('public');
+
+  const UPBIT_URL = 'https://api.upbit.com';
+  const STATIC_URL = 'https://static.upbit.com';
+
+  const port = process.env.PORT ? process.env.PORT : '3001';
+  const DATA_IO_URL = `http://localhost:${port}`;
+
   const upbitInstance = getInstance(UPBIT_URL);
   const dataIoInstance = getInstance(DATA_IO_URL);
   const staticInstance = getInstance(STATIC_URL);
@@ -102,17 +113,17 @@ const DATA_IO_URL = 'http://localhost:3001';
       };
     });
 
-  // await dataIoInstance.post('/markets', filteredAndConverted);
+  await dataIoInstance.post('/markets', filteredAndConverted);
 
   // logo 다운로드
-  // for (const market of filteredAndConverted) {
-  //   const code = market.code.split('-')[1];
+  for (const market of filteredAndConverted) {
+    const code = market.code.split('-')[1];
 
-  //   const imageResponse = await staticInstance.get(`/logos/${code}.png`, {
-  //     responseType: 'stream',
-  //   });
-  //   imageResponse.data.pipe(fs.createWriteStream(`./public/${code}.png`));
-  // }
+    const imageResponse = await staticInstance.get(`/logos/${code}.png`, {
+      responseType: 'stream',
+    });
+    imageResponse.data.pipe(fs.createWriteStream(`./public/${code}.png`));
+  }
 
   // // Coin 데이터 넣기
   const endDates = generateEndDates();
